@@ -1,0 +1,88 @@
+﻿{
+  "id": "a1b2c3d4-0003-0003-0003-000000000003",
+  "name": "03 - Daily Recipe Digest Email",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 7 * * *" }]
+        }
+      },
+      "id": "schedule-daily",
+      "name": "Schedule: 7am Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/api/webhooks/top-recipes",
+        "options": {}
+      },
+      "id": "get-top-recipes",
+      "name": "Get Top Recipes (last 24h)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/api/webhooks/all-users",
+        "options": {}
+      },
+      "id": "get-all-users",
+      "name": "Get All Users",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const recipes = $('Get Top Recipes (last 24h)').first().json.recipes || [];\nconst users = $input.first().json.users || [];\nconst appUrl = 'http://localhost:5173';\n\nif (recipes.length === 0) return [{ json: { skip: true } }];\n\nconst recipeCards = recipes.map(r => `\n  <div style=\"border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;background:white\">\n    <h3 style=\"color:#15803d;margin:0 0 6px\">${r.title}</h3>\n    <p style=\"color:#6b7280;font-size:14px;margin:0 0 8px\">${r.description || ''}</p>\n    <p style=\"color:#9ca3af;font-size:12px\">by @${r.username} · 🔖 ${r.save_count} saves · ❤️ ${r.like_count} likes</p>\n    <a href=\"${appUrl}/recipe/${r.id}\" style=\"color:#16a34a;font-size:14px;font-weight:600\">View Recipe →</a>\n  </div>\n`).join('');\n\nconst html = `\n  <div style=\"font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#f0fdf4;border-radius:16px\">\n    <h1 style=\"color:#16a34a;font-size:24px\">🥗 Today's Top Nourishly Recipes</h1>\n    <p style=\"color:#374151\">Here are the most-loved recipes from the past 24 hours:</p>\n    ${recipeCards}\n    <a href=\"${appUrl}\" style=\"display:inline-block;background:#16a34a;color:white;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;margin-top:8px\">See All Recipes →</a>\n    <p style=\"color:#9ca3af;font-size:11px;margin-top:24px\">You're receiving this because you're a Nourishly member. Nourishly — Cook Better. Live Better.</p>\n  </div>\n`;\n\nreturn users.map(u => ({ json: { to: u.email, username: u.username, subject: \"🥗 Today's top Nourishly recipes for you\", html } }));"
+      },
+      "id": "build-digest",
+      "name": "Build Digest Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "leftValue": "={{ $json.skip }}", "rightValue": true, "operator": { "type": "boolean", "operation": "notEquals" } }]
+        }
+      },
+      "id": "skip-if-empty",
+      "name": "Skip if No Recipes",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "send-digest",
+      "name": "Send Digest Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1340, 240],
+      "credentials": { "gmailOAuth2": { "id": "gmail-creds", "name": "Gmail account" } }
+    }
+  ],
+  "connections": {
+    "Schedule: 7am Daily": { "main": [[{ "node": "Get Top Recipes (last 24h)", "type": "main", "index": 0 }]] },
+    "Get Top Recipes (last 24h)": { "main": [[{ "node": "Get All Users", "type": "main", "index": 0 }]] },
+    "Get All Users": { "main": [[{ "node": "Build Digest Emails", "type": "main", "index": 0 }]] },
+    "Build Digest Emails": { "main": [[{ "node": "Skip if No Recipes", "type": "main", "index": 0 }]] },
+    "Skip if No Recipes": { "main": [[{ "node": "Send Digest Email", "type": "main", "index": 0 }], []] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "nourishly" }]
+}

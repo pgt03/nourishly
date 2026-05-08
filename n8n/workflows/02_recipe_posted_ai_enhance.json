@@ -1,0 +1,103 @@
+﻿{
+  "id": "a1b2c3d4-0002-0002-0002-000000000002",
+  "name": "02 - Recipe Posted: Auto AI Enhance",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recipe-posted",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-recipe",
+      "name": "Webhook: Recipe Posted",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/api/webhooks/recipe-posted",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "recipeId", "value": "={{ $json.body.recipeId }}" }]
+        },
+        "options": {}
+      },
+      "id": "get-recipe",
+      "name": "Get Recipe Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "leftValue": "={{ $json.recipe?.description }}", "rightValue": "", "operator": { "type": "string", "operation": "isEmpty" } }]
+        }
+      },
+      "id": "needs-description",
+      "name": "Needs AI Description?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/api/ai/generate-description",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "title", "value": "={{ $json.recipe.title }}" },
+            { "name": "cuisine_type", "value": "={{ $json.recipe.cuisine_type }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "call-ai",
+      "name": "Call AI: Generate Description",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 220],
+      "notes": "Requires backend auth token — set httpHeaderAuth with Authorization: Bearer <admin-token>"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"received\": true, \"enhanced\": false }"
+      },
+      "id": "respond-skip",
+      "name": "Respond: Already has description",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 380]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"received\": true, \"enhanced\": true }"
+      },
+      "id": "respond-enhanced",
+      "name": "Respond: Enhanced",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 220]
+    }
+  ],
+  "connections": {
+    "Webhook: Recipe Posted": { "main": [[{ "node": "Get Recipe Details", "type": "main", "index": 0 }]] },
+    "Get Recipe Details": { "main": [[{ "node": "Needs AI Description?", "type": "main", "index": 0 }]] },
+    "Needs AI Description?": {
+      "main": [
+        [{ "node": "Call AI: Generate Description", "type": "main", "index": 0 }],
+        [{ "node": "Respond: Already has description", "type": "main", "index": 0 }]
+      ]
+    },
+    "Call AI: Generate Description": { "main": [[{ "node": "Respond: Enhanced", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "nourishly" }]
+}

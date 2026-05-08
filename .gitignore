@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment files — never commit real secrets
+.env
+frontend/.env
+**/.env.local
+**/.env.production
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# Database
+backend/src/db/*.sqlite
+backend/src/db/*.db
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+
+# n8n data
+.n8n/
+
+# Uploads
+backend/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Claude Code session files
+.claude/
+
+# Generated PDFs
+Nourishly_User_Playbook.pdf

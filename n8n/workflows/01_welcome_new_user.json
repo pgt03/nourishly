@@ -1,0 +1,101 @@
+﻿{
+  "id": "a1b2c3d4-0001-0001-0001-000000000001",
+  "name": "01 - Welcome New User",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "user-signup",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-signup",
+      "name": "Webhook: User Signed Up",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/api/webhooks/user-signup",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "userId", "value": "={{ $json.body.userId }}" }]
+        },
+        "options": {}
+      },
+      "id": "get-user-info",
+      "name": "Get User Info from Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [{ "leftValue": "={{ $json.user }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }]
+        }
+      },
+      "id": "check-user-exists",
+      "name": "User Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const user = $input.first().json.user;\nconst appUrl = 'http://localhost:5173';\nreturn [{\n  json: {\n    to: user.email,\n    subject: `Welcome to Nourishly, ${user.username}! 🥗`,\n    html: `\n      <div style=\"font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:32px;background:#f0fdf4;border-radius:16px\">\n        <h1 style=\"color:#16a34a;font-size:28px;margin-bottom:8px\">Welcome to Nourishly! 🥗</h1>\n        <p style=\"color:#374151;font-size:16px\">Hi <strong>${user.username}</strong>,</p>\n        <p style=\"color:#374151\">You've joined a community of home cooks sharing real, practical recipes for modern families.</p>\n        <div style=\"background:white;border-radius:12px;padding:24px;margin:24px 0;border:1px solid #bbf7d0\">\n          <h2 style=\"color:#15803d;font-size:18px;margin-bottom:12px\">Get started in 3 steps:</h2>\n          <p>🍽️ <strong>Browse</strong> the feed and discover recipes</p>\n          <p>🔖 <strong>Save</strong> your favourites to your library</p>\n          <p>✨ <strong>Post</strong> your own recipe with AI assistance</p>\n        </div>\n        <a href=\"${appUrl}\" style=\"display:inline-block;background:#16a34a;color:white;padding:12px 28px;border-radius:12px;text-decoration:none;font-weight:600\">Start Cooking →</a>\n        <p style=\"color:#9ca3af;font-size:12px;margin-top:32px\">Nourishly — Cook Better. Live Better.</p>\n      </div>\n    `\n  }\n}];"
+      },
+      "id": "build-welcome-email",
+      "name": "Build Welcome Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 240]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "id": "send-welcome-email",
+      "name": "Send Welcome Email (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1120, 240],
+      "credentials": { "gmailOAuth2": { "id": "gmail-creds", "name": "Gmail account" } }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"received\": true, \"status\": \"welcome_queued\" }"
+      },
+      "id": "respond-ok",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 380]
+    }
+  ],
+  "connections": {
+    "Webhook: User Signed Up": { "main": [[{ "node": "Get User Info from Backend", "type": "main", "index": 0 }]] },
+    "Get User Info from Backend": { "main": [[{ "node": "User Found?", "type": "main", "index": 0 }]] },
+    "User Found?": {
+      "main": [
+        [{ "node": "Build Welcome Email", "type": "main", "index": 0 }],
+        [{ "node": "Respond OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Welcome Email": { "main": [[{ "node": "Send Welcome Email (Gmail)", "type": "main", "index": 0 }]] },
+    "Send Welcome Email (Gmail)": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "nourishly" }]
+}

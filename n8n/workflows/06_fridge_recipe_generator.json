@@ -1,0 +1,63 @@
+﻿{
+  "id": "a1b2c3d4-0006-0006-0006-000000000006",
+  "name": "06 - Fridge Recipe Generator via n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fridge-recipes-n8n",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-fridge",
+      "name": "Webhook: Fridge Recipe Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { ingredients } = $input.first().json.body;\nif (!ingredients || !ingredients.length) throw new Error('ingredients required');\nconst list = Array.isArray(ingredients) ? ingredients : ingredients.split(',').map(s => s.trim());\nif (list.length < 2) throw new Error('provide at least 2 ingredients');\nreturn [{ json: { ingredients: list, count: list.length } }];"
+      },
+      "id": "validate-fridge",
+      "name": "Validate Ingredients",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/api/ai/fridge-recipes",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "ingredients", "value": "={{ $json.ingredients }}" }]
+        },
+        "options": {}
+      },
+      "id": "call-fridge-ai",
+      "name": "Call AI: Fridge Recipes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond-fridge",
+      "name": "Respond with Suggestions",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: Fridge Recipe Request": { "main": [[{ "node": "Validate Ingredients", "type": "main", "index": 0 }]] },
+    "Validate Ingredients": { "main": [[{ "node": "Call AI: Fridge Recipes", "type": "main", "index": 0 }]] },
+    "Call AI: Fridge Recipes": { "main": [[{ "node": "Respond with Suggestions", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "nourishly" }]
+}

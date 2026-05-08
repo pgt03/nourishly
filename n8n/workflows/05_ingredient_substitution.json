@@ -1,0 +1,66 @@
+﻿{
+  "id": "a1b2c3d4-0005-0005-0005-000000000005",
+  "name": "05 - Ingredient Substitution via n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ingredient-sub-n8n",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-sub",
+      "name": "Webhook: Ingredient Sub Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { ingredient, cuisine_type } = $input.first().json.body;\nif (!ingredient) throw new Error('ingredient is required');\nreturn [{ json: { ingredient, cuisine_type: cuisine_type || 'home-style' } }];"
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/api/ai/ingredient-sub",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "ingredient", "value": "={{ $json.ingredient }}" },
+            { "name": "cuisine_type", "value": "={{ $json.cuisine_type }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "call-ai-sub",
+      "name": "Call AI: Ingredient Sub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond-subs",
+      "name": "Respond with Substitutes",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: Ingredient Sub Request": { "main": [[{ "node": "Validate Input", "type": "main", "index": 0 }]] },
+    "Validate Input": { "main": [[{ "node": "Call AI: Ingredient Sub", "type": "main", "index": 0 }]] },
+    "Call AI: Ingredient Sub": { "main": [[{ "node": "Respond with Substitutes", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "nourishly" }]
+}

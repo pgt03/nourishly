@@ -1,0 +1,81 @@
+﻿{
+  "id": "a1b2c3d4-0004-0004-0004-000000000004",
+  "name": "04 - Recipe Saved: Popularity Tracking",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recipe-saved",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-saved",
+      "name": "Webhook: Recipe Saved",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3001/api/webhooks/recipe-saved",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "recipeId", "value": "={{ $json.body.recipeId }}" }]
+        },
+        "options": {}
+      },
+      "id": "get-stats",
+      "name": "Get Recipe Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [{ "leftValue": "={{ $json.stats?.save_count }}", "rightValue": 10, "operator": { "type": "number", "operation": "gte" } }]
+        }
+      },
+      "id": "is-popular",
+      "name": "Milestone: 10+ saves?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stats = $input.first().json.stats;\nconsole.log(`🔥 Popular recipe: ${stats.title} (${stats.save_count} saves, ${stats.like_count} likes)`);\nreturn [{ json: { logged: true, recipe: stats.title, saves: stats.save_count } }];"
+      },
+      "id": "log-popular",
+      "name": "Log Popular Recipe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"received\": true }"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 380]
+    }
+  ],
+  "connections": {
+    "Webhook: Recipe Saved": { "main": [[{ "node": "Get Recipe Stats", "type": "main", "index": 0 }]] },
+    "Get Recipe Stats": { "main": [[{ "node": "Milestone: 10+ saves?", "type": "main", "index": 0 }]] },
+    "Milestone: 10+ saves?": {
+      "main": [
+        [{ "node": "Log Popular Recipe", "type": "main", "index": 0 }],
+        [{ "node": "Respond", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Popular Recipe": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "nourishly" }]
+}
