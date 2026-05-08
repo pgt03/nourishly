@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { recipesAPI } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { formatDate, formatTime, getImageUrl } from '../utils/formatters';
+import { formatDate, formatTime, getRecipeImage } from '../utils/formatters';
 import Spinner, { FullPageSpinner } from '../components/ui/Spinner';
 import Avatar from '../components/ui/Avatar';
 import DifficultyBadge from '../components/ui/DifficultyBadge';
@@ -46,7 +46,7 @@ export default function RecipeDetail() {
   if (!recipe) return null;
 
   const isOwner = user?.id === recipe.user_id;
-  const imgUrl = getImageUrl(recipe.photo_url);
+  const imgUrl = getRecipeImage(recipe);
   const allTags = [...(recipe.tags || []), recipe.is_budget ? 'Budget' : null, recipe.is_kid_friendly ? 'Kid-Friendly' : null, recipe.is_fifteen_min ? '15-Min Meal' : null].filter(Boolean);
 
   return (
@@ -58,13 +58,14 @@ export default function RecipeDetail() {
 
       <article className="animate-fade-in">
         {/* Hero photo */}
-        {imgUrl ? (
-          <div className="rounded-2xl overflow-hidden mb-6 aspect-video bg-gray-100 shadow-sm">
-            <img src={imgUrl} alt={recipe.title} className="w-full h-full object-cover" />
-          </div>
-        ) : (
-          <div className="rounded-2xl bg-gradient-to-br from-brand-50 to-warm-50 mb-6 aspect-video flex items-center justify-center text-8xl shadow-sm">🍽️</div>
-        )}
+        <div className="rounded-2xl overflow-hidden mb-6 aspect-video bg-gray-100 shadow-sm">
+          <img
+            src={imgUrl}
+            alt={recipe.title}
+            className="w-full h-full object-cover"
+            onError={e => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=75'; }}
+          />
+        </div>
 
         {/* Title + owner actions */}
         <div className="flex items-start justify-between gap-4 mb-4">

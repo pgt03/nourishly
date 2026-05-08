@@ -4,7 +4,6 @@ import { recipesAPI } from '../api/client';
 import RecipeCard from '../components/recipe/RecipeCard';
 import Spinner from '../components/ui/Spinner';
 import EmptyState from '../components/ui/EmptyState';
-import FoodIllustration from '../components/hero/FoodIllustration';
 import { useDebounce } from '../hooks/useDebounce';
 import { CUISINES, DIFFICULTIES } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
@@ -110,9 +109,32 @@ export default function Feed() {
               </div>
             </div>
 
-            {/* Right — Food illustration */}
-            <div className="hidden lg:flex items-center justify-center animate-fade-in">
-              <FoodIllustration />
+            {/* Right — Real food photo */}
+            <div className="hidden lg:block animate-fade-in">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-400/30 to-transparent rounded-3xl z-10" />
+                <img
+                  src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=700&q=80"
+                  alt="Colourful healthy food bowl"
+                  className="w-full max-w-lg mx-auto rounded-3xl shadow-2xl object-cover aspect-[4/3]"
+                  onError={e => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=700&q=80'; }}
+                />
+                {/* Floating badge */}
+                <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl px-4 py-3 flex items-center gap-2 z-20">
+                  <span className="text-2xl">🤖</span>
+                  <div>
+                    <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">AI-Powered</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-none mt-0.5">Smart recipes</p>
+                  </div>
+                </div>
+                <div className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl px-4 py-3 flex items-center gap-2 z-20">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <p className="text-xs font-bold text-gray-900 dark:text-white leading-none">Under 15 min</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-none mt-0.5">Quick meals</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

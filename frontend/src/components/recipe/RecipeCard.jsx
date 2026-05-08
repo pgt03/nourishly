@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { savesAPI, likesAPI } from '../../api/client';
-import { formatDate, formatTime, truncate, getImageUrl } from '../../utils/formatters';
+import { formatDate, formatTime, truncate, getRecipeImage } from '../../utils/formatters';
 import Avatar from '../ui/Avatar';
 import DifficultyBadge from '../ui/DifficultyBadge';
 import toast from 'react-hot-toast';
@@ -59,17 +59,18 @@ export default function RecipeCard({ recipe, onSaveToggle, onLikeToggle }) {
     } catch { } finally { setLiking(false); }
   };
 
-  const imgUrl = getImageUrl(recipe.photo_url);
+  const imgUrl = getRecipeImage(recipe);
 
   return (
     <div onClick={() => navigate(`/recipe/${recipe.id}`)} className="card card-hover group block animate-fade-in cursor-pointer">
       {/* Photo */}
       <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-50 to-warm-50 overflow-hidden">
-        {imgUrl ? (
-          <img src={imgUrl} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-5xl">🍽️</div>
-        )}
+        <img
+          src={imgUrl}
+          alt={recipe.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={e => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=75'; }}
+        />
         {/* Badges overlay */}
         <div className="absolute top-2 left-2 flex flex-wrap gap-1">
           {recipe.is_fifteen_min ? <span className="badge bg-warm-100 text-warm-600">⚡ 15 min</span> : null}

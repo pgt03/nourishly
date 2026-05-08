@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { aiAPI } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import Spinner from '../ui/Spinner';
 import toast from 'react-hot-toast';
 
 export default function AIDescriptionBtn({ title, ingredients, cuisineType, onResult }) {
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   const generate = async () => {
+    if (!user) { toast.error('Log in to use AI features'); return; }
     if (!title) { toast.error('Add a recipe title first'); return; }
     setLoading(true);
     try {
