@@ -24,37 +24,26 @@ export function getImageUrl(url) {
   return url;
 }
 
-const CUISINE_PHOTOS = {
-  Indian:          'photo-1585937421612-70a008356fbe',
-  Italian:         'photo-1498837167922-ddd27525d352',
-  Mexican:         'photo-1565299624946-b28f40a84f97',
-  Chinese:         'photo-1563245372-f21724e3856d',
-  Japanese:        'photo-1569050467447-ce54b3bbc37d',
-  Thai:            'photo-1455619452474-d2be8b1e70cd',
-  Mediterranean:   'photo-1540189549336-e6e99c3679fe',
-  American:        'photo-1568901346375-23c9450c58cd',
-  French:          'photo-1414235077428-338989a2e8c0',
-  Korean:          'photo-1590301157890-4810ed352733',
-  Greek:           'photo-1544025162-d76538f3ee17',
-  Vietnamese:      'photo-1555126634-323283e090fa',
-  'Middle Eastern':'photo-1547592180-85f173990554',
-};
-
-const FALLBACK_PHOTOS = [
-  'photo-1512621776951-a57141f2eefd',
-  'photo-1546069901-ba9599a7e63c',
-  'photo-1490645935967-10de6ba17061',
-  'photo-1547592166-23ac45744acd',
-  'photo-1504674900247-0877df9cc836',
-  'photo-1498579809087-ef1e558fd1da',
-];
-
-export function getRecipeImage(recipe) {
+export function getRecipeImage(recipe, { width = 600, height = 450 } = {}) {
   if (recipe?.photo_url) return getImageUrl(recipe.photo_url);
-  const cuisinePhoto = CUISINE_PHOTOS[recipe?.cuisine_type];
-  if (cuisinePhoto) return `https://images.unsplash.com/${cuisinePhoto}?auto=format&fit=crop&w=600&q=75`;
-  const idx = (recipe?.id || 0) % FALLBACK_PHOTOS.length;
-  return `https://images.unsplash.com/${FALLBACK_PHOTOS[idx]}?auto=format&fit=crop&w=600&q=75`;
+
+  const title = recipe?.title || 'delicious homemade meal';
+  const cuisine = recipe?.cuisine_type && recipe.cuisine_type !== 'Any'
+    ? `, ${recipe.cuisine_type} cuisine` : '';
+
+  const prompt =
+    `award-winning professional food photography of ${title}${cuisine}, ` +
+    `beautifully plated on elegant tableware, close-up macro shot, ` +
+    `soft warm natural lighting, vibrant mouth-watering colors, ` +
+    `bokeh background, ultra-realistic, 4k, appetising, tempting`;
+
+  // Seed from recipe id so same recipe always generates same image
+  const seed = recipe?.id ? Number(String(recipe.id).replace(/\D/g, '').slice(-6)) % 999983 : 42;
+
+  return (
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}` +
+    `?width=${width}&height=${height}&nologo=true&model=flux&seed=${seed}`
+  );
 }
 
 export function truncate(str, len = 120) {

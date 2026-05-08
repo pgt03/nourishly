@@ -13,6 +13,28 @@ import IngredientSubBtn from '../components/ai/IngredientSubBtn';
 import Modal from '../components/ui/Modal';
 import toast from 'react-hot-toast';
 
+function HeroImage({ src, alt }) {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  return (
+    <div className="rounded-2xl overflow-hidden mb-6 aspect-video bg-gray-100 dark:bg-gray-800 shadow-sm relative">
+      {!loaded && !errored && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 animate-pulse">
+          <span className="text-6xl opacity-20">🍽️</span>
+          <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">Generating dish image…</p>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        onError={() => setErrored(true)}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      />
+    </div>
+  );
+}
+
 export default function RecipeDetail() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -46,7 +68,7 @@ export default function RecipeDetail() {
   if (!recipe) return null;
 
   const isOwner = user?.id === recipe.user_id;
-  const imgUrl = getRecipeImage(recipe);
+  const imgUrl = getRecipeImage(recipe, { width: 1200, height: 675 });
   const allTags = [...(recipe.tags || []), recipe.is_budget ? 'Budget' : null, recipe.is_kid_friendly ? 'Kid-Friendly' : null, recipe.is_fifteen_min ? '15-Min Meal' : null].filter(Boolean);
 
   return (
@@ -58,14 +80,7 @@ export default function RecipeDetail() {
 
       <article className="animate-fade-in">
         {/* Hero photo */}
-        <div className="rounded-2xl overflow-hidden mb-6 aspect-video bg-gray-100 shadow-sm">
-          <img
-            src={imgUrl}
-            alt={recipe.title}
-            className="w-full h-full object-cover"
-            onError={e => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=75'; }}
-          />
-        </div>
+        <HeroImage src={imgUrl} alt={recipe.title} />
 
         {/* Title + owner actions */}
         <div className="flex items-start justify-between gap-4 mb-4">

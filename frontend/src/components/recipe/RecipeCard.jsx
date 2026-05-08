@@ -7,6 +7,28 @@ import Avatar from '../ui/Avatar';
 import DifficultyBadge from '../ui/DifficultyBadge';
 import toast from 'react-hot-toast';
 
+function ImageWithSkeleton({ src, alt }) {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const fallback = 'https://image.pollinations.ai/prompt/delicious%20food%20beautifully%20plated?width=600&height=450&nologo=true&model=flux&seed=1';
+  return (
+    <div className="w-full h-full relative">
+      {!loaded && !errored && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 animate-pulse flex items-center justify-center">
+          <span className="text-4xl opacity-30">🍽️</span>
+        </div>
+      )}
+      <img
+        src={errored ? fallback : src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        onError={() => { if (!errored) setErrored(true); }}
+        className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      />
+    </div>
+  );
+}
+
 export default function RecipeCard({ recipe, onSaveToggle, onLikeToggle }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -64,13 +86,8 @@ export default function RecipeCard({ recipe, onSaveToggle, onLikeToggle }) {
   return (
     <div onClick={() => navigate(`/recipe/${recipe.id}`)} className="card card-hover group block animate-fade-in cursor-pointer">
       {/* Photo */}
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-50 to-warm-50 overflow-hidden">
-        <img
-          src={imgUrl}
-          alt={recipe.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={e => { e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=75'; }}
-        />
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-50 to-warm-50 dark:from-gray-800 dark:to-gray-700 overflow-hidden">
+        <ImageWithSkeleton src={imgUrl} alt={recipe.title} />
         {/* Badges overlay */}
         <div className="absolute top-2 left-2 flex flex-wrap gap-1">
           {recipe.is_fifteen_min ? <span className="badge bg-warm-100 text-warm-600">⚡ 15 min</span> : null}
